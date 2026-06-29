@@ -1,13 +1,13 @@
 from Utils.constants import G
 
-def calculate_accelerations(bodies: list) -> list[tuple[float, float]]:
+def calculate_accelerations(bodies: list) -> list[tuple[float, float, float]]:
     """ Рассчитывает ускорения для всех тел в системе под действием гравитации """
     n = len(bodies)
-    accelerations = [(0.0, 0.0)] * n
+    accelerations = [(0.0, 0.0, 0.0)] * n
 
     # Считаем силу взаимодействия каждой пары тел
     for i in range(n):
-        ax_total, ay_total = 0.0, 0.0
+        ax_total, ay_total, az_total = 0.0, 0.0, 0.0
 
         for j in range(n):
             if i == j:
@@ -15,8 +15,9 @@ def calculate_accelerations(bodies: list) -> list[tuple[float, float]]:
 
             dx = bodies[j].x - bodies[i].x
             dy = bodies[j].y - bodies[i].y
+            dz = bodies[j].z - bodies[i].z  # Разница по глубине
 
-            r_squared = dx * dx + dy * dy
+            r_squared = dx * dx + dy * dy + dz * dz
             # Защита от деления на ноль при совпадении координат
             if r_squared < 1e-10:
                 continue
@@ -26,7 +27,8 @@ def calculate_accelerations(bodies: list) -> list[tuple[float, float]]:
 
             ax_total += force_factor * dx
             ay_total += force_factor * dy
+            az_total += force_factor * dz
 
-        accelerations[i] = (ax_total, ay_total)
+        accelerations[i] = (ax_total, ay_total, az_total)
 
     return accelerations

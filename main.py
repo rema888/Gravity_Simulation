@@ -1,11 +1,13 @@
 from Core.simulation import Simulation
 from Utils.constants import MASS_SUN, MASS_EARTH, AU
 
-print("=== Инициализация гравитационной симуляции ===")
+print("=== Инициализация гравитационной симуляции (3D) ===")
 
 sim = Simulation()
-sim.add_body(mass=MASS_SUN, x=0, y=0, vx=0, vy=0)
-sim.add_body(mass=MASS_EARTH, x=AU, y=0, vx=0, vy=29783)
+# Добавляем Солнце в центре
+sim.add_body(mass=MASS_SUN, x=0, y=0, z=0, vx=0, vy=0, vz=0)
+# Добавляем Землю на орбите (движение остаётся в плоскости XY)
+sim.add_body(mass=MASS_EARTH, x=AU, y=0, z=0, vx=0, vy=29783, vz=0)
 
 # Запоминаем начальную энергию
 initial_energy = sim.get_total_energy()['total']
@@ -18,7 +20,7 @@ print("-" * 60)
 for i in range(100):
     sim.step()
 
-    # Выводим статус каждые 10 шагов, чтобы не забивать консоль
+    # Выводим статус каждые 10 шагов
     if (i + 1) % 10 == 0:
         current_energy = sim.get_total_energy()['total']
         drift = abs(current_energy - initial_energy) / abs(initial_energy) * 100

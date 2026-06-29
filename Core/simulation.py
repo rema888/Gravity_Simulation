@@ -9,27 +9,29 @@ class Simulation:
     Управляет состоянием системы, шагом времени и методом интегрирования.
     Предоставляет интерфейс для модуля визуализации.
     """
-
     def __init__(self):
         self.bodies: list[Body] = []  # Список небесных тел
-        self.dt: float = DEFAULT_DT  # Шаг времени (с)
+        self.dt: float = DEFAULT_DT   # Шаг времени (с)
         self.method: str = DEFAULT_METHOD  # Метод интегрирования
-        self.time: float = 0.0  # Текущее время симуляции (с)
+        self.time: float = 0.0        # Текущее время симуляции (с)
         self._is_running: bool = False  # Флаг состояния (запущена/пауза)
 
-    def add_body(self, mass: float, x: float, y: float, vx: float, vy: float) -> None:
+    def add_body(self, mass: float, x: float, y: float, z: float,
+                 vx: float, vy: float, vz: float) -> None:
         """ Добавляет новое тело в симуляцию с полной проверкой входных данных """
+        import math
+
         # Проверка массы
         if mass <= 0:
             raise ValueError(f"Масса тела должна быть положительной. Получено: {mass}")
 
         # Проверка типов координат и скоростей
-        if not all(isinstance(v, (int, float)) for v in [x, y, vx, vy]):
+        coords_speeds = [x, y, z, vx, vy, vz]
+        if not all(isinstance(v, (int, float)) for v in coords_speeds):
             raise TypeError("Координаты и скорости должны быть числовыми значениями.")
 
         # Проверка на NaN/Inf (критично для численных методов)
-        import math
-        for val in [mass, x, y, vx, vy]:
+        for val in [mass] + coords_speeds:
             if math.isnan(val) or math.isinf(val):
                 raise ValueError(f"Недопустимое значение: {val}. Используйте конечные числа.")
 
@@ -38,7 +40,8 @@ class Simulation:
         for body in self.bodies:
             dx = body.x - x
             dy = body.y - y
-            dist = math.sqrt(dx * dx + dy * dy)
+            dz = body.z - z
+            dist = math.sqrt(dx*dx + dy*dy + dz*dz)
             if dist < MIN_DISTANCE:
                 raise ValueError(
                     f"Новое тело слишком близко к существующему (расстояние {dist:.0f} м). "
@@ -53,7 +56,7 @@ class Simulation:
                 f"требуется оптимизация алгоритма (Barnes-Hut)."
             )
 
-        body = Body(mass=mass, x=x, y=y, vx=vx, vy=vy)
+        body = Body(mass=mass, x=x, y=y, z=z, vx=vx, vy=vy, vz=vz)
         self.bodies.append(body)
 
     def remove_body(self, index: int) -> None:
@@ -73,14 +76,14 @@ class Simulation:
         if method in ["euler", "rk4"]:
             self.method = method
         else:
-            raise ValueError("Можно использовать либо метод Эйлера, либо метод Рунге-Кутта 4 порядка точности")
+            raise ValueError("Можно использовать либо метод Эйлера, либо метод Рунге-Кутты 4 порядка точности")
 
     def step(self) -> None:
         """
         Выполняет один шаг симуляции:
-        1. Рассчитывает ускорения от всех тел.
-        2. Обновляет скорости и координаты выбранным методом.
-        3. Увеличивает глобальное время.
+        1. Рассчитывает ускорения от всех тел
+        2. Обновляет скорости и координаты выбранным методом
+        3. Увеличивает глобальное время
         """
         if not self.bodies:
             return
@@ -90,7 +93,6 @@ class Simulation:
         if self.method == "euler":
             euler_step(self.bodies, accelerations, self.dt)
         elif self.method == "rk4":
-            # Для RK4 передаём функцию расчёта ускорений, а не готовые значения
             rk4_step(self.bodies, calculate_accelerations, self.dt)
 
         self.time += self.dt
@@ -99,9 +101,9 @@ class Simulation:
         """ Сбрасывает время симуляции на 0. Тела остаются на своих местах """
         self.time = 0.0
 
-    def get_positions(self) -> list[tuple[float, float]]:
+    def get_positions(self) -> list[tuple[float, float, float]]:
         """
-        Возвращает список текущих координат всех тел в формате [(x1,y1), (x2,y2), ...].
+        Возвращает список текущих координат всех тел в формате [(x1,y1,z1), (x2,y2,z2), ...].
         """
         return [body.get_position() for body in self.bodies]
 
@@ -116,22 +118,22 @@ class Simulation:
         """
         import math
 
-        kinetic = 0.0  # Кинетическая энергия (движение)
-        potential = 0.0  # Потенциальная энергия (гравитация)
+        kinetic = 0.0      # Кинетическая энергия (движение)
+        potential = 0.0    # Потенциальная энергия (гравитация)
 
         # Считаем кинетическую энергию: E_k = 0.5 * m * v^2
         for body in self.bodies:
-            v_squared = body.vx ** 2 + body.vy ** 2
+            v_squared = body.vx**2 + body.vy**2 + body.vz**2
             kinetic += 0.5 * body.mass * v_squared
 
         # Считаем потенциальную энергию: E_p = -G * m1 * m2 / r
-        # Проходим по всем уникальным парам тел (i < j), чтобы не считать дважды
         n = len(self.bodies)
         for i in range(n):
             for j in range(i + 1, n):
                 dx = self.bodies[j].x - self.bodies[i].x
                 dy = self.bodies[j].y - self.bodies[i].y
-                r = math.sqrt(dx * dx + dy * dy)
+                dz = self.bodies[j].z - self.bodies[i].z
+                r = math.sqrt(dx*dx + dy*dy + dz*dz)
 
                 # Защита от деления на ноль, если тела совпали
                 if r > 1e-10:
