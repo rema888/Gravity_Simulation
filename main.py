@@ -17,8 +17,8 @@ from UI.interface import Application
 
 
 def main() -> None:
-    sim = Simulation()          # вычислительное 3D-ядро (друга)
-    app = Application(sim)      # графический интерфейс (моя часть)
+    sim = Simulation()          # вычислительное 3D-ядро 
+    app = Application(sim)      # графический интерфейс 
     app.run()                  # главный цикл: события -> step() -> отрисовка
 
 

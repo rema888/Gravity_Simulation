@@ -841,7 +841,9 @@ class Application:
         ]
 
         lines.append("")
-        lines.append("Камера: ЛКМ — вращать · колесо — зум · ср.кнопка — сдвиг")
+        lines.append("ЛКМ — вращать")
+        lines.append("Колесо — зум")
+        lines.append("Кнопка — сдвиг")
 
         if self.edit_mode:
             lines.append("РЕДАКТОР: ЛКМ+тяни — тело (на плоскости z=0) и скорость")

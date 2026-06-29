@@ -1,3 +1,5 @@
 .idea/
 __pycache__/
 *.pyc
+instruction.md
+README_FOR_UI.md

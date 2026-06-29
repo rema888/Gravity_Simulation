@@ -1,9 +1,17 @@
 """
 Консольная проверка корректности ядра (3D): мониторинг сохранения полной энергии.
-Вынесена из main.py, чтобы main.py запускал графическое приложение.
 
-Запуск:  py energy_test.py
+Запуск из корня проекта:  py tests/energy_test.py
 """
+
+import os
+import sys
+
+# Чтобы импорт Core/Utils работал при запуске из папки tests/, добавляем
+# корень проекта в путь поиска модулей.
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
 from Core.simulation import Simulation
 from Utils.constants import MASS_SUN, MASS_EARTH, AU
