@@ -1,32 +1,26 @@
+"""
+Точка входа в программу.
+
+Согласно архитектуре проекта main.py делает очень мало:
+1. Создаёт вычислительное ядро (Simulation) — 3D.
+2. Создаёт приложение с графическим интерфейсом (Application).
+3. Запускает главный цикл.
+
+Сцену (тела) выбирает пользователь прямо в интерфейсе кнопками «Сценарии»,
+поэтому здесь тела не добавляем — приложение само загрузит сценарий по умолчанию.
+
+Запуск:  py main.py
+"""
+
 from Core.simulation import Simulation
-from Utils.constants import MASS_SUN, MASS_EARTH, AU
+from UI.interface import Application
 
-print("=== Инициализация гравитационной симуляции (3D) ===")
 
-sim = Simulation()
-# Добавляем Солнце в центре
-sim.add_body(mass=MASS_SUN, x=0, y=0, z=0, vx=0, vy=0, vz=0)
-# Добавляем Землю на орбите (движение остаётся в плоскости XY)
-sim.add_body(mass=MASS_EARTH, x=AU, y=0, z=0, vx=0, vy=29783, vz=0)
+def main() -> None:
+    sim = Simulation()          # вычислительное 3D-ядро (друга)
+    app = Application(sim)      # графический интерфейс (моя часть)
+    app.run()                  # главный цикл: события -> step() -> отрисовка
 
-# Запоминаем начальную энергию
-initial_energy = sim.get_total_energy()['total']
-print(f"Начальная полная энергия: {initial_energy:.4e} Дж\n")
 
-print("=== Мониторинг энергии (метод RK4, dt=3600с) ===")
-print(f"{'Шаг':<6} {'Время (ч)':<10} {'Полная энергия':<25} {'Изменение (%)':<15}")
-print("-" * 60)
-
-for i in range(100):
-    sim.step()
-
-    # Выводим статус каждые 10 шагов
-    if (i + 1) % 10 == 0:
-        current_energy = sim.get_total_energy()['total']
-        drift = abs(current_energy - initial_energy) / abs(initial_energy) * 100
-
-        print(f"{i + 1:<6} {sim.time / 3600:<10.1f} {current_energy:<25.4e} {drift:<15.2e}")
-
-final_drift = abs(sim.get_total_energy()['total'] - initial_energy) / abs(initial_energy)
-print(f"\n Итоговое изменение энергии за 100 часов: {final_drift:.2e}%")
-print("Если значение < 0.0001% — симуляция работает корректно!")
+if __name__ == "__main__":
+    main()
